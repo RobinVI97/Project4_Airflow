@@ -71,31 +71,55 @@ def final_project():
     Stage_songs = stage_songs_to_redshift
 
 
-    load_songplays_table = LoadFactOperator(
+    load_songplays_fact_table = LoadFactOperator(
         task_id='Load_songplays_fact_table',
+        table="songplay",
+        redshift_conn_id="redshift",
+        aws_credentials_id="aws_credentials",
+        sql=SqlQueries.songplay_table_insert
     )
 
     load_user_dimension_table = LoadDimensionOperator(
         task_id='Load_user_dim_table',
+        table="user_dim",
+        redshift_conn_id="redshift",
+        aws_credentials_id="aws_credentials",
+        sql=SqlQueries.user_table_insert
     )
 
     load_song_dimension_table = LoadDimensionOperator(
         task_id='Load_song_dim_table',
+        table="song_dim",
+        redshift_conn_id="redshift",
+        aws_credentials_id="aws_credentials",
+        sql=SqlQueries.song_table_insert
     )
 
     load_artist_dimension_table = LoadDimensionOperator(
         task_id='Load_artist_dim_table',
+        table="artist_dim",
+        redshift_conn_id="redshift",
+        aws_credentials_id="aws_credentials",
+        sql=SqlQueries.artist_table_insert
     )
 
     load_time_dimension_table = LoadDimensionOperator(
         task_id='Load_time_dim_table',
+        table="time_dim",
+        redshift_conn_id="redshift",
+        aws_credentials_id="aws_credentials",
+        sql=SqlQueries.time_table_insert
     )
 
     run_quality_checks = DataQualityOperator(
         task_id='Run_data_quality_checks',
     )
 
-    start_operator >> create_events_table >> Stage_events
-    start_operator >> create_songs_table >> Stage_songs
+    start_operator >> create_events_table >> Stage_events >> load_songplays_fact_table
+    start_operator >> create_songs_table >> Stage_songs >> load_songplays_fact_table
+    load_songplays_fact_table >> load_user_dimension_table
+    load_songplays_fact_table >> load_song_dimension_table
+    load_songplays_fact_table >> load_artist_dimension_table
+    load_songplays_fact_table >> load_time_dimension_table
 
 final_project_dag = final_project()
